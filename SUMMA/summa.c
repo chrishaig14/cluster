@@ -6,7 +6,7 @@
 int main(int argc, char const* argv[]) {
     int num_proc;
 
-    MPI_Init(NULL,NULL);
+    MPI_Init(NULL, NULL);
 
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
 
@@ -14,21 +14,25 @@ int main(int argc, char const* argv[]) {
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int array[N_ITEMS];
+    int global[N_ITEMS];
 
     for (size_t i = 0; i < N_ITEMS; i++) {
-        array[i] = i;
+        global[i] = i;
     }
 
     int local[N_ITEMS];
 
-    MPI_Scatter(array, N_ITEMS / num_proc, MPI_INT, local, N_ITEMS / num_proc, MPI_INT, 0,
-                MPI_COMM_WORLD);
+    int sendcounts[4] = {1, 2, 3, 10};
+    int displs[4] = {0, 1, 3, 6};
 
-    char str [256];
+    // al 0 le llega 1 int; al 1, 2; al 2, 3; al 3, 10; empezando en las posiciones en displs
+
+    MPI_Scatterv(global, sendcounts, displs, MPI_INT, local, sendcounts[rank], MPI_INT, 0, MPI_COMM_WORLD);
+
+    char str[256];
     int c = 0;
     char* p = str;
-    for (size_t i = 0; i < N_ITEMS / num_proc; i++) {
+    for (size_t i = 0; i < sendcounts[rank]; i++) {
         p += c;
         c = sprintf(p, "%i\t", local[i]);
     }
