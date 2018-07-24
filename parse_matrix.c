@@ -1,26 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "matrix.h"
 
 int** parse_matrix_txt(const char* filename, int* m, int* n) {
     FILE* file = fopen(filename, "r");
     int num;
-    while (fscanf(file, "%i", &num) != EOF) {}
-}
-
-int** malloc2d(int m, int n) {
-    int** a = (int**)malloc(m * sizeof(int*));
-    int* p = (int*)malloc(m * n * sizeof(int));
-    
-    for (size_t i = 0; i < m; i++) {
-        a[i] = p + i * n;
+    while (fscanf(file, "%i", &num) != EOF) {
     }
-    
-    return a;
-}
-
-void free2d(int** a) {
-    free(a[0]);
-    free(a);
 }
 
 int** parse_matrix(const char* filename, int* pm, int* pn) {
@@ -41,9 +27,9 @@ int** parse_matrix(const char* filename, int* pm, int* pn) {
     while (fread(&num, sizeof(num), 1, file) == 1) {
         i = count / n;
         j = count % n;
-        
+
         a[i][j] = num;
-        
+
         printf("%i\t", a[i][j]);
         if (j == n - 1) {
             printf("\n");
