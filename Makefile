@@ -5,4 +5,4 @@ Random_matrix:
 Parse_matrix:
 	gcc matrix.c parse_matrix.c -o parse_matrix
 Summa:
-	mpicc SUMMA/summa.c matrix.c -o summa
+	mpicc SUMMA/summa.c matrix.c -lm -o summa
