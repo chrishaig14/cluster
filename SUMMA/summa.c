@@ -6,7 +6,16 @@
 #include "../matrix.h"
 #define N 6
 
-int main(int argc, char const* argv[]) {
+void print_matrix(int **a, int m, int n) {
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < n; j++) {
+            printf("%i\t", a[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+int main(int argc, char const *argv[]) {
     int num_proc;  // num_proc es un cuadrado: 4, 9, 16, 25, 36, etc...
 
     MPI_Init(NULL, NULL);
@@ -21,14 +30,14 @@ int main(int argc, char const* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     // int** global = NULL;
-    int* globalptr = NULL;
-    int** global = NULL;
+    int *globalptr = NULL;
+    int **global = NULL;
 
     int bs = N / s_num_proc;
     printf("BS %i\n", bs);
 
-    // al 0 le llega 1 int; al 1, 2; al 2, 3; al 3, 10; empezando en las posiciones en displs
-    // size: tamaño de la matriz
+    // al 0 le llega 1 int; al 1, 2; al 2, 3; al 3, 10; empezando en las
+    // posiciones en displs size: tamaño de la matriz
     int size[2] = {N, N};
     // subsizes: tamaños de la submatriz
     int subsizes[2] = {bs, bs};
@@ -38,7 +47,8 @@ int main(int argc, char const* argv[]) {
     MPI_Datatype type;
     MPI_Datatype new_type;
 
-    MPI_Type_create_subarray(2, size, subsizes, start, MPI_ORDER_C, MPI_INT, &type);
+    MPI_Type_create_subarray(2, size, subsizes, start, MPI_ORDER_C, MPI_INT,
+                             &type);
     MPI_Type_create_resized(type, 0, bs * sizeof(int), &new_type);
     MPI_Type_commit(&new_type);
 
@@ -53,55 +63,56 @@ int main(int argc, char const* argv[]) {
             }
         }
 
-        for (size_t i = 0; i < N; i++) {
-            for (size_t j = 0; j < N; j++) {
-                printf("%i\t", global[i][j]);
-            }
-            printf("\n");
-        }
+        print_matrix(global, N, N);
     }
 
-    int* send_counts = malloc(num_proc * sizeof(int));
+    int *send_counts = malloc(num_proc * sizeof(int));
     // cada proceso recibe una submatriz
 
     for (size_t i = 0; i < num_proc; i++) {
         send_counts[i] = 1;
     }
 
-    int* displs = malloc(num_proc * sizeof(int));
+    int *displs = malloc(num_proc * sizeof(int));
     for (size_t i = 0; i < s_num_proc; i++) {
         for (size_t j = 0; j < s_num_proc; j++) {
             displs[i * s_num_proc + j] = i * s_num_proc * bs + j % s_num_proc;
-            printf("displ %i:  %i\n", i * s_num_proc + j, displs[i * s_num_proc + j]);
+            printf("displ %i:  %i\n", i * s_num_proc + j,
+                   displs[i * s_num_proc + j]);
         }
     }
 
-    int** local = malloc2d(bs, bs);
+    int **local = malloc2d(bs, bs);
 
-    for (size_t i = 0; i < num_proc; i++) {
-        printf("send_counts[%i] = %i\n", i, send_counts[i]);
-    }
-
-    for (size_t i = 0; i < num_proc; i++) {
-        printf("displ[%i] = %i\n", i, displs[i]);
-    }
-
-    MPI_Scatterv(globalptr, send_counts, displs, new_type, &(local[0][0]), bs * bs, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatterv(globalptr, send_counts, displs, new_type, &(local[0][0]),
+                 bs * bs, MPI_INT, 0, MPI_COMM_WORLD);
 
     printf("RANK: %i\n", rank);
     printf("Waiting to receive matrix...\n");
 
-
     printf("Received!\n");
+
+    print_matrix(local, bs, bs);
+
+    // Acá se hace el cálculo
 
     for (size_t i = 0; i < bs; i++) {
         for (size_t j = 0; j < bs; j++) {
-            printf("%i\t", local[i][j]);
+            local[i][j] *= local[i][j];
         }
-        printf("\n");
     }
 
+    printf("Partial result\n");
+
+    print_matrix(local, bs, bs);
+
+    MPI_Gatherv(&(local[0][0]), bs * bs, MPI_INT, globalptr, send_counts,
+                displs, new_type, 0, MPI_COMM_WORLD);
+
+    printf("Received result matrix:\n");
+
     if (rank == 0) {
+        print_matrix(global, N, N);
         free2d(global);
     }
     free2d(local);
