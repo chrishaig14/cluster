@@ -8,7 +8,15 @@
 
 #define N 6
 
-int** matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
+void matrix_sum(int** a, int** b, int** c, int m, int n) {
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < n; j++) {
+            c[i][j] = a[i][j] + b[i][j];
+        }
+    }
+}
+
+void matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
     // a = m x n, b = n x r, c = m x r
 
     uint64_t count = 0;
@@ -31,7 +39,34 @@ int** matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
             }
         }
     }
-    return c;
+}
+
+void row_col_mult(int*** row_matrix, int*** col_matrix, int** result, int m, int n, int r, int k) {
+    printf("Filling result with zeroes...\n");
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < r; j++) {
+            result[i][j] = 0;
+        }
+    }
+
+    print_matrix(result, m, r);
+
+    printf("OK\n");
+
+    for (size_t i = 0; i < k; i++) {
+        int** partial_result = malloc2d(m, r);
+        printf("Partial multiplication...\n");
+        printf("First matrix: \n");
+        print_matrix(row_matrix[i], m, n);
+        printf("Second matrix: \n");
+        print_matrix(col_matrix[i], n, r);
+        matrix_mult(row_matrix[i], col_matrix[i], partial_result, m, n, r);
+        printf("Resulting matrix: \n");
+        print_matrix(partial_result, m, r);
+        printf("Ready\n");
+        matrix_sum(result, partial_result, result, m, r);
+        free2d(partial_result);
+    }
 }
 
 MPI_Datatype create_submatrix_type(int bs) {
@@ -160,7 +195,7 @@ int main(int argc, char const* argv[]) {
         int n = 0;
         for (size_t i = 0; i < N; i++) {
             for (size_t j = 0; j < N; j++) {
-                global[i][j] = n;
+                global[i][j] = rand()%5;
                 n++;
             }
         }
@@ -191,13 +226,7 @@ int main(int argc, char const* argv[]) {
 
     // matrix_mult(local, local, result, m, m, m);
 
-    gather_matrix(local, m, n, global);
 
-    if (rank == 0) {
-        printf("Received result matrix:\n");
-        print_matrix(global, N, N);
-        free2d(global);
-    }
 
     // número de fila y de columna del proceso
 
@@ -265,6 +294,25 @@ int main(int argc, char const* argv[]) {
         print_matrix(col_matrix[i], m, n);
         printf("\n");
     }
+
+    printf("Calculating multiplication...\n");
+
+    int** result = malloc2d(3, 3);
+    row_col_mult(row_matrix, col_matrix, result, 3, 3, 3, 2);
+
+    printf("Local result: \n");
+
+    print_matrix(result, 3, 3);
+
+    gather_matrix(result, m, n, global);
+
+    if (rank == 0) {
+        printf("Received result matrix:\n");
+        print_matrix(global, N, N);
+        free2d(global);
+    }
+
+    free2d(result);
 
     MPI_Comm_free(&ROW_COMM);
     MPI_Comm_free(&COL_COMM);
