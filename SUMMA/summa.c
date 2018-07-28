@@ -198,8 +198,89 @@ int main(int argc, char const* argv[]) {
         print_matrix(global, N, N);
         free2d(global);
     }
-    free2d(local);
+
+    // número de fila y de columna del proceso
+
+    int my_row = rank / 2;
+    int my_col = rank % 2;
+
+    // crear los grupos para cada fila y cada columna
+
+    MPI_Comm ROW_COMM;
+    MPI_Comm COL_COMM;
+
+    MPI_Comm_split(MPI_COMM_WORLD, my_row, my_col, &ROW_COMM);
+    MPI_Comm_split(MPI_COMM_WORLD, my_col, my_row, &COL_COMM);
+
+    int*** row_matrix = malloc(2 * sizeof(int**));
+    int*** col_matrix = malloc(2 * sizeof(int**));
+
+    printf("Malloc-ing...\n");
+
+    for (size_t j = 0; j < 2; j++) {
+        row_matrix[j] = malloc2d(m, n);
+    }
+
+    for (size_t i = 0; i < 2; i++) {
+        col_matrix[i] = malloc2d(m, n);
+    }
+
+    free2d(row_matrix[my_col]);
+    free2d(col_matrix[my_row]);
+
+    row_matrix[my_col] = local;
+    col_matrix[my_row] = local;
+
+    printf("OK\n");
+
+    for (size_t j = 0; j < 2; j++) {
+        // broadcast row
+        if (j == my_col) {
+            printf("Broadcasting...\n");
+            printf("\n");
+            print_matrix(row_matrix[j], m, n);
+            printf("\n");
+        }
+
+        MPI_Bcast(&(row_matrix[j][0][0]), m * n, MPI_INT, j, ROW_COMM);
+    }
+
+    for (size_t i = 0; i < 2; i++) {
+        // broadcast col
+        MPI_Bcast(&(col_matrix[i][0][0]), m * n, MPI_INT, i, COL_COMM);
+    }
+
+    printf("Current row: \n");
+
+    for (size_t j = 0; j < 2; j++) {
+        printf("\n");
+        print_matrix(row_matrix[j], m, n);
+        printf("\n");
+    }
+
+    printf("Current column: \n");
+
+    for (size_t i = 0; i < 2; i++) {
+        printf("\n");
+        print_matrix(col_matrix[i], m, n);
+        printf("\n");
+    }
+
+    MPI_Comm_free(&ROW_COMM);
+    MPI_Comm_free(&COL_COMM);
 
     MPI_Finalize();
+
+    for (size_t i = 0; i < 2; i++) {
+        if (i == my_col) {
+            free2d(col_matrix[i]);
+        } else if (i != my_row) {
+            free2d(row_matrix[i]);
+            free2d(col_matrix[i]);
+        }
+    }
+    free(row_matrix);
+    free(col_matrix);
+
     return 0;
 }
