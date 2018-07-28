@@ -5,8 +5,15 @@
 
 int main(int argc, char const* argv[]) {
     
-    if (argc != 3) {
-        printf("Usage: random_matrix n output");
+    if (argc != 4) {
+        printf("Usage: random_matrix n output val_max");
+        return 0;
+    }
+
+    int val_max = atoi(argv[3]);
+    if(val_max < 0){
+        fprintf(stderr, "val_max can't be negative or 0!\n");
+        return -1;
     }
 
     srand(time(NULL));
@@ -16,8 +23,6 @@ int main(int argc, char const* argv[]) {
     char const* output = argv[2];
 
     FILE* file = fopen(output, "w");
-    
-    
 
     char output2[256];
     strcpy(output2, output);
@@ -35,7 +40,7 @@ int main(int argc, char const* argv[]) {
     int num;
     for (size_t i = 0; i < n; i++) {
         for (size_t j = 0; j < n; j++) {
-            num = rand() % 1000000;
+            num = rand() % val_max;
             fprintf(file, "%i\t", num);
             fwrite(&num, sizeof(num), 1, file2);
             printf("%i\t", num);
