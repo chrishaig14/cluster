@@ -208,17 +208,29 @@ int main(int argc, char const* argv[]) {
         // print_matrix(global, N, N);
     }
 
-    int m, n;
+    int m_a, n_a, m_b, n_b;
     printf("Waiting to receive matrix...\n");
-    int** local_a = scatter_matrix(global_a, M, N, m_proc, n_proc, &m, &n);
+    int** local_a = scatter_matrix(global_a, M, N, m_proc, n_proc, &m_a, &n_a);
     printf("Received A!\n");
-    print_matrix(local_a, m, n);
+    print_matrix(local_a, m_a, n_a);
     printf("ENTER to continue...");
     getchar();
-    int** local_b = scatter_matrix(global_b, M, N, m_proc, n_proc, &m, &n);
+    int** local_b = scatter_matrix(global_b, N, R, m_proc, n_proc, &m_b, &n_b);
     printf("Received B!\n");
-    print_matrix(local_b, m, n);
+    print_matrix(local_b, m_b, n_b);
     printf("ENTER to continue...");
+
+    if (n_a != m_b) {
+        fprintf(stderr, "ERROR!!!\n");
+        return -1;
+    }
+
+    int m, n, r;
+
+    m = m_a;
+    n = n_a;
+    r = n_b;
+
     getchar();
 
     // número de fila y de columna del proceso
@@ -244,7 +256,7 @@ int main(int argc, char const* argv[]) {
     }
 
     for (size_t i = 0; i < n_proc; i++) {
-        col_matrix[i] = malloc2d(m, n);
+        col_matrix[i] = malloc2d(n, r);
     }
 
     free2d(row_matrix[my_col]);
@@ -262,7 +274,7 @@ int main(int argc, char const* argv[]) {
 
     for (size_t i = 0; i < n_proc; i++) {
         // broadcast col
-        MPI_Bcast(&(col_matrix[i][0][0]), m * n, MPI_INT, i, COL_COMM);
+        MPI_Bcast(&(col_matrix[i][0][0]), n * r, MPI_INT, i, COL_COMM);
     }
 
     // printf("Current row: \n");
@@ -283,16 +295,14 @@ int main(int argc, char const* argv[]) {
 
     printf("Calculating multiplication...\n");
 
-    
-
-    int** result = malloc2d(3, 3);
-    row_col_mult(row_matrix, col_matrix, result, 3, 3, 3, 2);
+    int** result = malloc2d(m, r);
+    row_col_mult(row_matrix, col_matrix, result, m, n, r, n_proc);
 
     printf("Local result: \n");
 
-    print_matrix(result, 3, 3);
+    print_matrix(result, m, r);
 
-    gather_matrix(result, m, n, M, N, m_proc, n_proc, global_result);
+    gather_matrix(result, m, r, M, R, m_proc, n_proc, global_result);
 
     if (rank == 0) {
         printf("Received result matrix:\n");
@@ -308,7 +318,7 @@ int main(int argc, char const* argv[]) {
 
     MPI_Finalize();
 
-    for (size_t i = 0; i < 2; i++) {
+    for (size_t i = 0; i < n_proc; i++) {
         if (i == my_col) {
             free2d(col_matrix[i]);
         } else if (i != my_row) {
