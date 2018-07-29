@@ -148,7 +148,7 @@ int** complete_with_zeros(int** a, int m, int n, int p, int q) {
     int** copy = malloc2d(p, q);
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < n; j++) {
-            copy[i][j] = [i][j];
+            copy[i][j] = a[i][j];
         }
     }
 
@@ -160,13 +160,24 @@ int** complete_with_zeros(int** a, int m, int n, int p, int q) {
     return copy;
 }
 
+int** remove_zeros(int** a, int p, int q, int m, int n) {
+    int** copy = malloc2d(m, n);
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < n; j++) {
+            copy[i][j] = a[i][j];
+        }
+    }
+
+    return copy;
+}
+
 int main(int argc, char const* argv[]) {
     // for(size_t i = 0; i < argc; i++){
     //     printf("argv[%i] = %s\n", i, argv[i]);
     // }
 
-    if (argc != 6) {
-        printf("Usage: summa m_proc n_proc matrix_a matrix_b result\n");
+    if (argc != 5) {
+        printf("Usage: summa N_PROC matrix_a matrix_b result\n");
         return 0;
     }
 
@@ -177,28 +188,26 @@ int main(int argc, char const* argv[]) {
     int** global_result = NULL;
 
     // number of processor rows
-    int m_proc = atoi(argv[1]);
-    // number of processor cols
-    int n_proc = atoi(argv[2]);
+    int N_PROC = atoi(argv[1]);
 
     int rank;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    printf("Working on a grid of %i x %i processors\n", m_proc, n_proc);
+    printf("Working on a grid of %i x %i processors\n", N_PROC, N_PROC);
 
     printf("RANK: %i\n", rank);
 
-    int M, N, R;
+    int M, N, R, M_O, N_O, R_O;
 
     if (rank == 0) {
         int m_a, n_a, m_b, n_b;
         printf("Reading matrix A...\n");
-        global_a = parse_matrix(argv[3], &m_a, &n_a);
+        global_a = parse_matrix(argv[2], &m_a, &n_a);
         printf("A: %i x %i\n", m_a, n_a);
         printf("OK\n");
         printf("Reading matrix B...\n");
-        global_b = parse_matrix(argv[4], &m_b, &n_b);
+        global_b = parse_matrix(argv[3], &m_b, &n_b);
         printf("B: %i x %i\n", m_b, n_b);
         printf("OK\n");
 
@@ -208,10 +217,31 @@ int main(int argc, char const* argv[]) {
             free2d(global_b);
             return -1;
         }
-        
-        M = m_a;
-        N = n_a;
-        R = n_b;
+
+        M_O = m_a;
+        N_O = n_a;
+        R_O = n_b;
+
+        int k = 0;
+        while ((M_O + k) % N_PROC != 0) k++;
+        M = M_O + k;
+        printf("k = %i\n", k);
+        k = 0;
+        while ((N_O + k) % N_PROC != 0) k++;
+        N = N_O + k;
+        printf("k = %i\n", k);
+        k = 0;
+        while ((R_O + k) % N_PROC != 0) k++;
+        printf("k = %i\n", k);
+        R = R_O + k;
+
+        int** new_a = complete_with_zeros(global_a, m_a, n_a, M, N);
+        int** new_b = complete_with_zeros(global_b, m_b, n_b, N, R);
+        free2d(global_a);
+        free2d(global_b);
+        global_a = new_a;
+        global_b = new_b;
+
         global_result = malloc2d(M, R);
         printf("A: %i x %i\n B: %i x %i\n", M, N, N, R);
         // printf("ENTER to start working...");
@@ -235,12 +265,12 @@ int main(int argc, char const* argv[]) {
 
     int m_a, n_a, m_b, n_b;
     // printf("Waiting to receive matrix...\n");
-    int** local_a = scatter_matrix(global_a, M, N, m_proc, n_proc, &m_a, &n_a);
+    int** local_a = scatter_matrix(global_a, M, N, N_PROC, N_PROC, &m_a, &n_a);
     printf("Received A!\n");
     print_matrix(local_a, m_a, n_a);
     // printf("ENTER to continue...");
     // getchar();
-    int** local_b = scatter_matrix(global_b, N, R, m_proc, n_proc, &m_b, &n_b);
+    int** local_b = scatter_matrix(global_b, N, R, N_PROC, N_PROC, &m_b, &n_b);
     printf("Received B!\n");
     print_matrix(local_b, m_b, n_b);
     // printf("ENTER to continue...");
@@ -260,8 +290,8 @@ int main(int argc, char const* argv[]) {
 
     // número de fila y de columna del proceso
 
-    int my_row = rank / n_proc;
-    int my_col = rank % n_proc;
+    int my_row = rank / N_PROC;
+    int my_col = rank % N_PROC;
 
     // crear los grupos para cada fila y cada columna
 
@@ -271,16 +301,16 @@ int main(int argc, char const* argv[]) {
     MPI_Comm_split(MPI_COMM_WORLD, my_row, my_col, &ROW_COMM);
     MPI_Comm_split(MPI_COMM_WORLD, my_col, my_row, &COL_COMM);
 
-    int*** row_matrix = malloc(n_proc * sizeof(int**));
-    int*** col_matrix = malloc(m_proc * sizeof(int**));
+    int*** row_matrix = malloc(N_PROC * sizeof(int**));
+    int*** col_matrix = malloc(N_PROC * sizeof(int**));
 
     // printf("Malloc-ing...\n");
 
-    for (size_t j = 0; j < n_proc; j++) {
+    for (size_t j = 0; j < N_PROC; j++) {
         row_matrix[j] = malloc2d(m, n);
     }
 
-    for (size_t i = 0; i < n_proc; i++) {
+    for (size_t i = 0; i < N_PROC; i++) {
         col_matrix[i] = malloc2d(n, r);
     }
 
@@ -292,12 +322,12 @@ int main(int argc, char const* argv[]) {
 
     // printf("OK\n");
 
-    for (size_t j = 0; j < n_proc; j++) {
+    for (size_t j = 0; j < N_PROC; j++) {
         // broadcast row
         MPI_Bcast(&(row_matrix[j][0][0]), m * n, MPI_INT, j, ROW_COMM);
     }
 
-    for (size_t i = 0; i < n_proc; i++) {
+    for (size_t i = 0; i < N_PROC; i++) {
         // broadcast col
         MPI_Bcast(&(col_matrix[i][0][0]), n * r, MPI_INT, i, COL_COMM);
     }
@@ -321,19 +351,21 @@ int main(int argc, char const* argv[]) {
     // printf("Calculating multiplication...\n");
 
     int** result = malloc2d(m, r);
-    row_col_mult(row_matrix, col_matrix, result, m, n, r, n_proc);
+    row_col_mult(row_matrix, col_matrix, result, m, n, r, N_PROC);
 
     printf("Local result: \n");
 
     print_matrix(result, m, r);
 
-    gather_matrix(result, m, r, M, R, m_proc, n_proc, global_result);
+    gather_matrix(result, m, r, M, R, N_PROC, N_PROC, global_result);
 
     if (rank == 0) {
         printf("Received result matrix:\n");
         print_matrix(global_result, M, R);
-        write_matrix(global_result, M, R, argv[5]);
+        int** result_ok = remove_zeros(global_result, M, R, M_O, R_O);
         free2d(global_result);
+        write_matrix(result_ok, M_O, R_O, argv[4]);
+        free2d(result_ok);
     }
 
     free2d(result);
@@ -343,7 +375,7 @@ int main(int argc, char const* argv[]) {
 
     MPI_Finalize();
 
-    for (size_t i = 0; i < n_proc; i++) {
+    for (size_t i = 0; i < N_PROC; i++) {
         if (i == my_col) {
             free2d(col_matrix[i]);
         } else if (i != my_row) {
