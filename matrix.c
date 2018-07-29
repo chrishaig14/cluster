@@ -45,7 +45,8 @@ void matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
             count++;
             perc = (float)count / total * 100;
             if (perc != prev_perc) {
-                printf("%i %%\n", perc);
+                printf("\rProgress: %i %%", perc);
+                fflush(stdout);
                 prev_perc = perc;
             }
         }
@@ -57,7 +58,7 @@ void print_matrix(int** a, int m, int n) {
         printf("MATRIX TOO LARGE TO BE SHOWN!\n");
         return;
     }
-    
+
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < n; j++) {
             printf("%i ", a[i][j]);
@@ -85,10 +86,6 @@ int** parse_matrix(const char* filename, int* pm, int* pn) {
 
         a[i][j] = num;
 
-        printf("%i\t", a[i][j]);
-        if (j == n - 1) {
-            printf("\n");
-        }
         count++;
     };
     fclose(file);
