@@ -6,13 +6,12 @@
 #include "../matrix.h"
 
 void row_col_mult(int*** row_matrix, int*** col_matrix, int** result, int m, int n, int r, int k) {
-    
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < r; j++) {
             result[i][j] = 0;
         }
     }
-    
+
     for (size_t i = 0; i < k; i++) {
         int** partial_result = malloc2d(m, r);
         // printf("Partial multiplication...\n");
@@ -145,6 +144,22 @@ void gather_matrix(int** local, int m, int n, int M, int N, int m_proc, int n_pr
     }
 }
 
+int** complete_with_zeros(int** a, int m, int n, int p, int q) {
+    int** copy = malloc2d(p, q);
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < n; j++) {
+            copy[i][j] = [i][j];
+        }
+    }
+
+    for (size_t i = m; i < p; i++) {
+        for (size_t j = n; j < q; j++) {
+            copy[i][j] = 0;
+        }
+    }
+    return copy;
+}
+
 int main(int argc, char const* argv[]) {
     // for(size_t i = 0; i < argc; i++){
     //     printf("argv[%i] = %s\n", i, argv[i]);
@@ -193,6 +208,7 @@ int main(int argc, char const* argv[]) {
             free2d(global_b);
             return -1;
         }
+        
         M = m_a;
         N = n_a;
         R = n_b;

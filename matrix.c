@@ -3,6 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int matrix_hash(int** a, int m, int n) {
+    int sum = 0;
+    for (size_t i = 0; i < m; i++) {
+        for (size_t j = 0; j < n; j++) {
+            sum += a[i][j];
+        }
+    }
+    return sum;
+}
+
 int** malloc2d(int m, int n) {
     int** a = (int**)malloc(m * sizeof(int*));
     int* p = (int*)malloc(m * n * sizeof(int));
@@ -93,10 +103,8 @@ int** parse_matrix(const char* filename, int* pm, int* pn) {
 }
 
 void write_matrix(int** a, int m, int n, const char* filename) {
-
     // printf("m: %i\n", m);
     // printf("n: %i\n", n);
-
 
     FILE* file = fopen(filename, "wb");
 
