@@ -5,12 +5,12 @@
 
 int main(int argc, char const* argv[]) {
     
-    if (argc != 4) {
-        printf("Usage: random_matrix n output val_max");
+    if (argc != 5) {
+        printf("Usage: random_matrix m n output val_max");
         return 0;
     }
 
-    int val_max = atoi(argv[3]);
+    int val_max = atoi(argv[4]);
     if(val_max < 0){
         fprintf(stderr, "val_max can't be negative or 0!\n");
         return -1;
@@ -18,9 +18,10 @@ int main(int argc, char const* argv[]) {
 
     srand(time(NULL));
 
-    int n = atoi(argv[1]);
+    int m = atoi(argv[1]);
+    int n = atoi(argv[2]);
 
-    char const* output = argv[2];
+    char const* output = argv[3];
 
     FILE* file = fopen(output, "w");
 
@@ -29,8 +30,6 @@ int main(int argc, char const* argv[]) {
     strcat(output2, ".bin");
     FILE* file2 = fopen(output2, "wb");
 
-    int m = n; // for now, matrices are square...
-
     fwrite(&m, sizeof(m), 1, file2);
     fwrite(&n, sizeof(n), 1, file2);
 
@@ -38,7 +37,7 @@ int main(int argc, char const* argv[]) {
     fprintf(file, "%i\n", n);
 
     int num;
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < n; j++) {
             num = rand() % val_max;
             fprintf(file, "%i\t", num);

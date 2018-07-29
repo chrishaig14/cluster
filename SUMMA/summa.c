@@ -50,7 +50,8 @@ MPI_Datatype create_submatrix_type(int M, int N, int m, int n) {
 
     MPI_Type_create_subarray(2, size, subsizes, start, MPI_ORDER_C, MPI_INT, &type);
     // printf("OK1\n");
-    MPI_Type_create_resized(type, 0, m * sizeof(int), &new_type);
+    MPI_Type_create_resized(type, 0, n * sizeof(int), &new_type); //???
+    // MPI_Type_create_resized(type, 0, m * sizeof(int), &new_type);
     // printf("OK2\n");
     MPI_Type_commit(&new_type);
     // printf("OK3\n");
@@ -89,8 +90,8 @@ int** scatter_matrix(int** global, int M, int N, int m_proc, int n_proc, int* pm
     printf("m_proc: %i\n", m_proc);
     printf("n_proc: %i\n", n_proc);
 
-    *pm = 3;
-    *pn = 3;
+    *pm = M / m_proc;
+    *pn = N / n_proc;
 
     int m = *pm;
     int n = *pn;

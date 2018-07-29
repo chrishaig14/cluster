@@ -53,9 +53,14 @@ void matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
 }
 
 void print_matrix(int** a, int m, int n) {
+    if (m > 10 || n > 10) {
+        printf("MATRIX TOO LARGE TO BE SHOWN!\n");
+        return;
+    }
+    
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < n; j++) {
-            printf("%i\t", a[i][j]);
+            printf("%i ", a[i][j]);
         }
         printf("\n");
     }
