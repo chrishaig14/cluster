@@ -75,7 +75,7 @@ int* calculate_displacements(int M, int N, int m_proc, int n_proc) {
     return displs;
 }
 
-int** scatter_matrix(int** global, int M, int N, int m_proc, int n_proc, int* m, int* n) {
+int** scatter_matrix(int** global, int M, int N, int m_proc, int n_proc, int* pm, int* pn) {
     int num_proc;  // num_proc es un cuadrado: 4, 9, 16, 25, 36, etc...
 
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
@@ -84,10 +84,18 @@ int** scatter_matrix(int** global, int M, int N, int m_proc, int n_proc, int* m,
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int** local = malloc2d(3, 3);
+    printf("M: %i\n", M);
+    printf("N: %i\n", N);
+    printf("m_proc: %i\n", m_proc);
+    printf("n_proc: %i\n", n_proc);
 
-    *m = 3;
-    *n = 3;
+    *pm = 3;
+    *pn = 3;
+
+    int m = *pm;
+    int n = *pn;
+
+    int** local = malloc2d(m, n);
 
     if (rank == 0) {
         int* globalptr = &(global[0][0]);
@@ -97,15 +105,15 @@ int** scatter_matrix(int** global, int M, int N, int m_proc, int n_proc, int* m,
 
         int* displs = calculate_displacements(M, N, m_proc, n_proc);
 
-        MPI_Datatype new_type = create_submatrix_type(M, N, *m, *n);
+        MPI_Datatype new_type = create_submatrix_type(M, N, m, n);
 
-        MPI_Scatterv(globalptr, send_counts, displs, new_type, &(local[0][0]), (*m) * (*n), MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(globalptr, send_counts, displs, new_type, &(local[0][0]), m * n, MPI_INT, 0, MPI_COMM_WORLD);
 
         MPI_Type_free(&new_type);
         free(send_counts);
         free(displs);
     } else {
-        MPI_Scatterv(NULL, NULL, NULL, NULL, &(local[0][0]), (*m) * (*n), MPI_INT, 0, MPI_COMM_WORLD);
+        MPI_Scatterv(NULL, NULL, NULL, NULL, &(local[0][0]), m * n, MPI_INT, 0, MPI_COMM_WORLD);
     }
 
     return local;
@@ -207,6 +215,10 @@ int main(int argc, char const* argv[]) {
 
         // print_matrix(global, N, N);
     }
+
+    MPI_Bcast(&M, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&R, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     int m_a, n_a, m_b, n_b;
     printf("Waiting to receive matrix...\n");
