@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-mpirun --oversubscribe -np 4 xterm -hold -e "./summa $1 $2 $3 $4 $5"
+total=$(($1*$2))
+echo "total:"${total}
+mpirun --oversubscribe -np $total xterm -hold -e "./summa $1 $2 $3 $4 $5"

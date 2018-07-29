@@ -6,38 +6,34 @@
 #include "../matrix.h"
 
 void row_col_mult(int*** row_matrix, int*** col_matrix, int** result, int m, int n, int r, int k) {
-    printf("Filling result with zeroes...\n");
+    
     for (size_t i = 0; i < m; i++) {
         for (size_t j = 0; j < r; j++) {
             result[i][j] = 0;
         }
     }
-
-    print_matrix(result, m, r);
-
-    printf("OK\n");
-
+    
     for (size_t i = 0; i < k; i++) {
         int** partial_result = malloc2d(m, r);
-        printf("Partial multiplication...\n");
-        printf("First matrix: \n");
+        // printf("Partial multiplication...\n");
+        // printf("First matrix: \n");
         print_matrix(row_matrix[i], m, n);
-        printf("Second matrix: \n");
+        // printf("Second matrix: \n");
         print_matrix(col_matrix[i], n, r);
         matrix_mult(row_matrix[i], col_matrix[i], partial_result, m, n, r);
-        printf("Resulting matrix: \n");
+        // printf("Resulting matrix: \n");
         print_matrix(partial_result, m, r);
-        printf("Ready\n");
+        // printf("Ready\n");
         matrix_sum(result, partial_result, result, m, r);
         free2d(partial_result);
     }
 }
 
 MPI_Datatype create_submatrix_type(int M, int N, int m, int n) {
-    printf("M = %i\n", M);
-    printf("N = %i\n", N);
-    printf("m = %i\n", m);
-    printf("n = %i\n", n);
+    // printf("M = %i\n", M);
+    // printf("N = %i\n", N);
+    // printf("m = %i\n", m);
+    // printf("n = %i\n", n);
     // tamaño de la matriz global
     int size[2] = {M, N};
     // subsizes: tamaños de la submatriz local
@@ -50,7 +46,7 @@ MPI_Datatype create_submatrix_type(int M, int N, int m, int n) {
 
     MPI_Type_create_subarray(2, size, subsizes, start, MPI_ORDER_C, MPI_INT, &type);
     // printf("OK1\n");
-    MPI_Type_create_resized(type, 0, n * sizeof(int), &new_type); //???
+    MPI_Type_create_resized(type, 0, n * sizeof(int), &new_type);  //???
     // MPI_Type_create_resized(type, 0, m * sizeof(int), &new_type);
     // printf("OK2\n");
     MPI_Type_commit(&new_type);
@@ -61,18 +57,18 @@ MPI_Datatype create_submatrix_type(int M, int N, int m, int n) {
 }
 
 int* calculate_displacements(int M, int N, int m_proc, int n_proc) {
-    printf("M = %i\n", M);
-    printf("N = %i\n", N);
-    printf("m_proc = %i\n", m_proc);
-    printf("n_proc = %i\n", n_proc);
+    // printf("M = %i\n", M);
+    // printf("N = %i\n", N);
+    // printf("m_proc = %i\n", m_proc);
+    // printf("n_proc = %i\n", n_proc);
     int* displs = malloc(m_proc * n_proc * sizeof(int));
     for (size_t i = 0; i < m_proc; i++) {
         for (size_t j = 0; j < n_proc; j++) {
             displs[i * n_proc + j] = i * (M / m_proc) * n_proc + j;
-            printf("displ %li:  %i\n", i * n_proc + j, displs[i * n_proc + j]);
+            // printf("displ %li:  %i\n", i * n_proc + j, displs[i * n_proc + j]);
         }
     }
-    getchar();
+    // getchar();
     return displs;
 }
 
@@ -85,10 +81,10 @@ int** scatter_matrix(int** global, int M, int N, int m_proc, int n_proc, int* pm
 
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    printf("M: %i\n", M);
-    printf("N: %i\n", N);
-    printf("m_proc: %i\n", m_proc);
-    printf("n_proc: %i\n", n_proc);
+    // printf("M: %i\n", M);
+    // printf("N: %i\n", N);
+    // printf("m_proc: %i\n", m_proc);
+    // printf("n_proc: %i\n", n_proc);
 
     *pm = M / m_proc;
     *pn = N / n_proc;
@@ -202,8 +198,8 @@ int main(int argc, char const* argv[]) {
         R = n_b;
         global_result = malloc2d(M, R);
         printf("A: %i x %i\n B: %i x %i\n", M, N, N, R);
-        printf("ENTER to start working...");
-        getchar();
+        // printf("ENTER to start working...");
+        // getchar();
 
         // global = malloc2d(N, N);
         // int n = 0;
@@ -222,16 +218,16 @@ int main(int argc, char const* argv[]) {
     MPI_Bcast(&R, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     int m_a, n_a, m_b, n_b;
-    printf("Waiting to receive matrix...\n");
+    // printf("Waiting to receive matrix...\n");
     int** local_a = scatter_matrix(global_a, M, N, m_proc, n_proc, &m_a, &n_a);
     printf("Received A!\n");
     print_matrix(local_a, m_a, n_a);
-    printf("ENTER to continue...");
-    getchar();
+    // printf("ENTER to continue...");
+    // getchar();
     int** local_b = scatter_matrix(global_b, N, R, m_proc, n_proc, &m_b, &n_b);
     printf("Received B!\n");
     print_matrix(local_b, m_b, n_b);
-    printf("ENTER to continue...");
+    // printf("ENTER to continue...");
 
     if (n_a != m_b) {
         fprintf(stderr, "ERROR!!!\n");
@@ -244,7 +240,7 @@ int main(int argc, char const* argv[]) {
     n = n_a;
     r = n_b;
 
-    getchar();
+    // getchar();
 
     // número de fila y de columna del proceso
 
@@ -306,7 +302,7 @@ int main(int argc, char const* argv[]) {
     //     printf("\n");
     // }
 
-    printf("Calculating multiplication...\n");
+    // printf("Calculating multiplication...\n");
 
     int** result = malloc2d(m, r);
     row_col_mult(row_matrix, col_matrix, result, m, n, r, n_proc);

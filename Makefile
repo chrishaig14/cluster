@@ -1,3 +1,4 @@
+all: Mult Random_matrix Summa
 Mult: 
 	gcc mult.c matrix.c -g -Wall -Werror=return-type -pedantic -o mult
 Matrix_mult:
