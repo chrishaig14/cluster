@@ -1,43 +1,9 @@
 #include <math.h>
 #include <mpi.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../matrix.h"
-
-void matrix_sum(int** a, int** b, int** c, int m, int n) {
-    for (size_t i = 0; i < m; i++) {
-        for (size_t j = 0; j < n; j++) {
-            c[i][j] = a[i][j] + b[i][j];
-        }
-    }
-}
-
-void matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
-    // a = m x n, b = n x r, c = m x r
-
-    uint64_t count = 0;
-
-    int total = m * r;
-
-    int prev_perc = -1;
-    int perc = 0;
-    for (size_t i = 0; i < m; i++) {
-        for (size_t j = 0; j < r; j++) {
-            c[i][j] = 0;
-            for (size_t k = 0; k < n; k++) {
-                c[i][j] += a[i][k] * b[k][j];
-            }
-            count++;
-            perc = (float)count / total * 100;
-            if (perc != prev_perc) {
-                printf("%i %%\n", perc);
-                prev_perc = perc;
-            }
-        }
-    }
-}
 
 void row_col_mult(int*** row_matrix, int*** col_matrix, int** result, int m, int n, int r, int k) {
     printf("Filling result with zeroes...\n");
@@ -83,13 +49,13 @@ MPI_Datatype create_submatrix_type(int M, int N, int m, int n) {
     MPI_Datatype new_type;
 
     MPI_Type_create_subarray(2, size, subsizes, start, MPI_ORDER_C, MPI_INT, &type);
-    printf("OK1\n");
+    // printf("OK1\n");
     MPI_Type_create_resized(type, 0, m * sizeof(int), &new_type);
-    printf("OK2\n");
+    // printf("OK2\n");
     MPI_Type_commit(&new_type);
-    printf("OK3\n");
+    // printf("OK3\n");
     MPI_Type_free(&type);
-    printf("OK4\n");
+    // printf("OK4\n");
     return new_type;
 }
 
@@ -101,8 +67,8 @@ int* calculate_displacements(int M, int N, int m_proc, int n_proc) {
     int* displs = malloc(m_proc * n_proc * sizeof(int));
     for (size_t i = 0; i < m_proc; i++) {
         for (size_t j = 0; j < n_proc; j++) {
-            displs[i * n_proc + j] = i * (M/m_proc) * n_proc + j;
-            printf("displ %i:  %i\n", i * n_proc + j, displs[i * n_proc + j]);
+            displs[i * n_proc + j] = i * (M / m_proc) * n_proc + j;
+            printf("displ %li:  %i\n", i * n_proc + j, displs[i * n_proc + j]);
         }
     }
     getchar();
@@ -174,17 +140,7 @@ void gather_matrix(int** local, int m, int n, int M, int N, int m_proc, int n_pr
     }
 }
 
-void print_matrix(int** a, int m, int n) {
-    for (size_t i = 0; i < m; i++) {
-        for (size_t j = 0; j < n; j++) {
-            printf("%i\t", a[i][j]);
-        }
-        printf("\n");
-    }
-}
-
 int main(int argc, char const* argv[]) {
-
     // for(size_t i = 0; i < argc; i++){
     //     printf("argv[%i] = %s\n", i, argv[i]);
     // }
@@ -193,8 +149,6 @@ int main(int argc, char const* argv[]) {
         printf("Usage: summa m_proc n_proc matrix_a matrix_b result\n");
         return 0;
     }
-
-    int num_proc;  // num_proc es un cuadrado: 4, 9, 16, 25, 36, etc...
 
     MPI_Init(NULL, NULL);
 
@@ -266,7 +220,6 @@ int main(int argc, char const* argv[]) {
     print_matrix(local_b, m, n);
     printf("ENTER to continue...");
     getchar();
-    
 
     // Acá se hace el cálculo
 
@@ -365,6 +318,7 @@ int main(int argc, char const* argv[]) {
     if (rank == 0) {
         printf("Received result matrix:\n");
         print_matrix(global_result, M, R);
+        write_matrix(global_result, M, R, argv[5]);
         free2d(global_result);
     }
 

@@ -1,3 +1,5 @@
+Mult: 
+	gcc mult.c matrix.c -g -Wall -Werror=return-type -pedantic -o mult
 Matrix_mult:
 	mpicc matrix_mult.c -o matrix_mult
 Random_matrix:
