@@ -221,26 +221,10 @@ int main(int argc, char const* argv[]) {
     printf("ENTER to continue...");
     getchar();
 
-    // Acá se hace el cálculo
-
-    // for (size_t i = 0; i < m; i++) {
-    //     for (size_t j = 0; j < n; j++) {
-    //         local[i][j] *= local[i][j];
-    //     }
-    // }
-
-    // printf("Partial result\n");
-
-    // print_matrix(local, m, n);
-
-    // int** result = malloc2d(m,m);
-
-    // matrix_mult(local, local, result, m, m, m);
-
     // número de fila y de columna del proceso
 
-    int my_row = rank / 2;
-    int my_col = rank % 2;
+    int my_row = rank / n_proc;
+    int my_col = rank % n_proc;
 
     // crear los grupos para cada fila y cada columna
 
@@ -250,16 +234,16 @@ int main(int argc, char const* argv[]) {
     MPI_Comm_split(MPI_COMM_WORLD, my_row, my_col, &ROW_COMM);
     MPI_Comm_split(MPI_COMM_WORLD, my_col, my_row, &COL_COMM);
 
-    int*** row_matrix = malloc(2 * sizeof(int**));
-    int*** col_matrix = malloc(2 * sizeof(int**));
+    int*** row_matrix = malloc(n_proc * sizeof(int**));
+    int*** col_matrix = malloc(m_proc * sizeof(int**));
 
-    printf("Malloc-ing...\n");
+    // printf("Malloc-ing...\n");
 
-    for (size_t j = 0; j < 2; j++) {
+    for (size_t j = 0; j < n_proc; j++) {
         row_matrix[j] = malloc2d(m, n);
     }
 
-    for (size_t i = 0; i < 2; i++) {
+    for (size_t i = 0; i < n_proc; i++) {
         col_matrix[i] = malloc2d(m, n);
     }
 
@@ -269,42 +253,37 @@ int main(int argc, char const* argv[]) {
     row_matrix[my_col] = local_a;
     col_matrix[my_row] = local_b;
 
-    printf("OK\n");
+    // printf("OK\n");
 
-    for (size_t j = 0; j < 2; j++) {
+    for (size_t j = 0; j < n_proc; j++) {
         // broadcast row
-        if (j == my_col) {
-            printf("Broadcasting...\n");
-            printf("\n");
-            print_matrix(row_matrix[j], m, n);
-            printf("\n");
-        }
-
         MPI_Bcast(&(row_matrix[j][0][0]), m * n, MPI_INT, j, ROW_COMM);
     }
 
-    for (size_t i = 0; i < 2; i++) {
+    for (size_t i = 0; i < n_proc; i++) {
         // broadcast col
         MPI_Bcast(&(col_matrix[i][0][0]), m * n, MPI_INT, i, COL_COMM);
     }
 
-    printf("Current row: \n");
+    // printf("Current row: \n");
 
-    for (size_t j = 0; j < 2; j++) {
-        printf("\n");
-        print_matrix(row_matrix[j], m, n);
-        printf("\n");
-    }
+    // for (size_t j = 0; j < 2; j++) {
+    //     printf("\n");
+    //     print_matrix(row_matrix[j], m, n);
+    //     printf("\n");
+    // }
 
-    printf("Current column: \n");
+    // printf("Current column: \n");
 
-    for (size_t i = 0; i < 2; i++) {
-        printf("\n");
-        print_matrix(col_matrix[i], m, n);
-        printf("\n");
-    }
+    // for (size_t i = 0; i < 2; i++) {
+    //     printf("\n");
+    //     print_matrix(col_matrix[i], m, n);
+    //     printf("\n");
+    // }
 
     printf("Calculating multiplication...\n");
+
+    
 
     int** result = malloc2d(3, 3);
     row_col_mult(row_matrix, col_matrix, result, 3, 3, 3, 2);
