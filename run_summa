@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-mpirun --oversubscribe -np 4 xterm -hold ./summa
