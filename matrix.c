@@ -61,6 +61,7 @@ void matrix_mult(int** a, int** b, int** c, int m, int n, int r) {
             }
         }
     }
+    printf("\n");
 }
 
 void print_matrix(int** a, int m, int n) {
@@ -103,9 +104,6 @@ int** parse_matrix(const char* filename, int* pm, int* pn) {
 }
 
 void write_matrix(int** a, int m, int n, const char* filename) {
-    // printf("m: %i\n", m);
-    // printf("n: %i\n", n);
-
     FILE* file = fopen(filename, "wb");
 
     fwrite(&m, sizeof(m), 1, file);
