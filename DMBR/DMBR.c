@@ -48,8 +48,14 @@ int* calculate_product( int* local_matrix_A,
 				}
 			}
 		}
-		MPI_Send(local_matrix_B, rows_BT_send, MPI_INT,dest, 0, MPI_COMM_WORLD);
-		MPI_Recv(local_matrix_B, rows_BT_send, MPI_INT,source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); 
+		if (proc_rank % 2 == 0) {
+			MPI_Send(local_matrix_B, rows_BT_send, MPI_INT,dest, 0, MPI_COMM_WORLD);
+			MPI_Recv(local_matrix_B, rows_BT_send, MPI_INT,source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		} else {
+			MPI_Recv(local_matrix_B, rows_BT_send, MPI_INT,source, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			MPI_Send(local_matrix_B, rows_BT_send, MPI_INT,dest, 0, MPI_COMM_WORLD);
+		}
+		
 	}
 
 	int* matrix_C = NULL;
