@@ -158,7 +158,17 @@ El programa consiste, en tomar la primer matriz, y dividir las filas entre los d
 Cada proceso calcula los productos entre las filas y columnas que recibió, calculando un resultado parcial de la matriz resultado. Después cada proceso enviá las columnas de la segunda matriz, a su siguiente vecino, determinado por el ranking de MPI. Y recibe las columnas de la segunda matriz de su vecino anterior. Estos pasos se repiten hasta que cada proceso calcula las filas correspondientes, de la matriz resultado.
 Finalmente cada proceso enviá las filas calculadas al proceso maestro, obteniendo la matriz resultado.
 
-### Suma
+### SUMMA
+
+Este algoritmo divide el trabajo a realizar en una grilla de P x P procesos. 
+
+Dadas las matrices a multiplicar A de M x N y B de N x R, cada matriz se subdivide en submatrices de M/P x N/P para A, y N/P x R/P para B. Cada proceso recibe desde el proceso root una submatriz de A y una de B (la que corresponde a su posición en la grilla de procesos). 
+
+A continuación cada proceso hace un broadcast de las submatrices que recibió del root: envía la submatriz de A que recibió a todos los procesos en su misma fila; y la de B a todos los procesos en su misma columna. 
+
+Cuando todos los procesos hayan hecho broadcast de sus submatrices, cada uno podrá de forma independiente a los demás calcular el producto correspondiente a una submatriz de M/P x R/P de la matriz resultado C, de M x R. 
+
+Finalmente, todos los procesos envían su submatriz resultado al proceso root, que arma la matriz resultado C completa.
 
 ### Cannon
 
@@ -167,3 +177,4 @@ Finalmente cada proceso enviá las filas calculadas al proceso maestro, obtenien
 
 - https://www.open-mpi.org/doc/v3.0/
 - Tutorial de MPI: http://mpitutorial.com/tutorials/
+- Scalable Universal Matrix Multiplication Algorithm (SUMMA): http://www.netlib.org/lapack/lawnspdf/lawn96.pdf

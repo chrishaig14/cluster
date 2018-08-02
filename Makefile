@@ -11,3 +11,5 @@ Summa:
 	mpicc SUMMA/summa.c matrix.c -g -Wall -Werror=return-type -pedantic -lm -o summa
 Cannon:
 	mpicc CANNON/cannon.c matrix.c -lm -o cannon
+Show_matrix:
+	gcc matrix.c show_matrix.c -o show_matrix

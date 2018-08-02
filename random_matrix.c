@@ -5,8 +5,8 @@
 #include "matrix.h"
 
 int main(int argc, char const* argv[]) {
-    if (argc != 5) {
-        printf("Usage: random_matrix m n output val_max");
+    if (argc != 6) {
+        printf("Usage: random_matrix m n output val_max seed");
         return 0;
     }
 
@@ -14,13 +14,14 @@ int main(int argc, char const* argv[]) {
     int n = atoi(argv[2]);
     char const* output = argv[3];
     int val_max = atoi(argv[4]);
+    int seed = atoi(argv[5]);
 
     if (val_max < 0) {
         fprintf(stderr, "val_max can't be negative or 0!\n");
         return -1;
     }
 
-    srand(time(NULL));
+    srand(time(NULL) + seed);
 
     int** a = malloc2d(m, n);
 
