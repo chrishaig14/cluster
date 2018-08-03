@@ -11,3 +11,5 @@ Ejecutar con
 Ejecutar con hostfile
 
 `mpirun --hostfile host_file -np 4 main`
+
+mpirun --hostfile host_file -np 4 "./main a b"

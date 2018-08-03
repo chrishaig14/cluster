@@ -2,12 +2,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "const.h"
 #include "matrix.h"
 #include "DMBR.h"
 
 
 int main(int argc, char** argv) {
+
+	if (argc != 3) {
+        printf("Usage: mult matrix_a matrix_b result");
+        return 0;
+    }
 
 	MPI_Init(NULL, NULL);
 
@@ -21,7 +25,7 @@ int main(int argc, char** argv) {
 		MPI_Abort(MPI_COMM_WORLD, 1);
 	}
 
-	decomposition_columns(proc_rank,num_proc);
+	decomposition_columns(proc_rank,num_proc,argv[1],argv[2]);
 
 	MPI_Finalize();
 

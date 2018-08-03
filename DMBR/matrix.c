@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "const.h"
 #include "matrix.h"
 
 
@@ -55,21 +54,6 @@ void delete_matrix(int* matrix) {
 	free(matrix);
 }
 
-
-void printMatrix(int* matrix,int r,int c) {
-
-	
-	for (size_t i = 0; i < r; i++) {
-		for (size_t j = 0; j < c; j++) {
-			printf("%d ", matrix[j+i*c]);
-		}
-		printf("\n");
-	}
-
-	printf("\n");
-
-}
-
 int* calculate_matrix_C(int* matrix,int rows,int cols,int cols_extra) {
 	int* matrix_C = (int*) malloc(sizeof(int) * rows * cols);
 	for (int row = 0; row < rows; ++row) {
@@ -78,4 +62,59 @@ int* calculate_matrix_C(int* matrix,int rows,int cols,int cols_extra) {
 		}
 	}
 	return matrix_C;
+}
+
+void read_rows_cols(const char* filename, int* rows, int* cols) {
+
+	FILE* file = fopen(filename, "rb");
+	fread(rows, sizeof(int), 1, file);
+    fread(cols, sizeof(int), 1, file);
+    fclose(file);
+
+}
+
+int* parse_matrix(const char* filename, int extra_rows) {
+    
+    FILE* file = fopen(filename, "rb");
+    int num;
+
+    int rows,cols;
+
+    fread(&rows, sizeof(int), 1, file);
+    fread(&cols, sizeof(int), 1, file);
+
+    int* matrix = (int*) malloc((rows+extra_rows)*cols*sizeof(int));
+
+    int count = 0;
+    while (fread(&num, sizeof(num), 1, file) == 1) {
+
+        matrix[count] = num;
+        count++;
+    };
+
+    for (count=rows*cols; count<(rows+extra_rows)*cols; count++) {
+		matrix[count] = 0;
+	}
+
+    fclose(file);
+
+	return matrix;
+
+}
+
+void write_matrix(int* a, int m, int n, const char* filename) {
+    FILE* file = fopen(filename, "wb");
+
+    fwrite(&m, sizeof(m), 1, file);
+    fwrite(&n, sizeof(n), 1, file);
+
+	for (size_t i = 0; i < m; i++) {
+		for (size_t j = 0; j < n; j++) {
+			fwrite(&(a[j+i*n]), sizeof(int), 1, file);
+		}
+
+	}
+
+
+    fclose(file);
 }
